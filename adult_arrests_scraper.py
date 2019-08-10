@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from inspect import currentframe, getframeinfo
 from tqdm import tqdm
 
-project_folder = '/home/hackerlikecomputer/CPD-Adult-Arrests-Scraper'
+project_folder = os.getcwd()
 load_dotenv(os.path.join(project_folder, '.env'))
 account_sid = os.getenv('TWILIO_SID')
 auth_token = os.getenv('TWILIO_AUTH')
@@ -270,7 +270,7 @@ for dataset in tqdm(datasets, position=0, desc='DATASETS'):
     df['bond_type'] = df.bond_type.str.replace('[A-z]+', '', regex=True)
 
     #directory to save file in
-    local_path = '/home/hackerlikecomputer/CPD-Adult-Arrests-Scraper/data/'
+    local_path = project_folder + '/data/'
     #save df as csv locally
     #then upload the files as a new table in the database
     df.to_csv(f'{local_path}beat_{beat}.csv', index=False)
