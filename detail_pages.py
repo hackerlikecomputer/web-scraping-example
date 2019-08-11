@@ -88,7 +88,7 @@ for beat in tqdm(beats, position=0, desc='BEATS'):
     last_page_btn = search_results.find(b)
     if last_page_btn is not None:
         last_page_btn = last_page_btn.find('a')['href']
-        max_page_no = int(re.findall('Page=(\d+)', last_page_btn)[0]) + 1
+        max_page_no = int(re.findall(r'Page=(\d+)', last_page_btn)[0]) + 1
     elif last_page_btn is None:
         # if no buttons, max_page_no is just 2 so it hits only one page
         max_page_no = 2
