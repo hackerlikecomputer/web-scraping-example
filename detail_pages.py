@@ -11,7 +11,7 @@ from inspect import currentframe, getframeinfo
 from tqdm import tqdm
 
 project_folder = os.getcwd()
-load_dotenv(os.path.join(project_folder, '.env'))
+load_dotenv()
 account_sid = os.getenv('TWILIO_SID')
 auth_token = os.getenv('TWILIO_AUTH')
 client = Client(account_sid, auth_token)
