@@ -1,5 +1,3 @@
-'''spamspamspam'''
-
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -13,7 +11,7 @@ from inspect import currentframe, getframeinfo
 from tqdm import tqdm
 
 project_folder = os.getcwd()
-load_dotenv()
+load_dotenv(os.path.join(project_folder, '.env')) 
 account_sid = os.getenv('TWILIO_SID')
 auth_token = os.getenv('TWILIO_AUTH')
 client = Client(account_sid, auth_token)
