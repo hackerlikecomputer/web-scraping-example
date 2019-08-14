@@ -125,12 +125,12 @@ def scrape_results_pages():
 
         datasets.append((beat, results))
         #make an archive of datasets in case it breaks
-        with open("/home/hackerlikecomputer/CPD-Adult-Arrests-Scraper/archive/datasets.txt", "w+") as f:
+        with open("/home/hackerlikecomputer/proj/CPD-Adult-Arrests-Scraper/archive/datasets.txt", "wb+") as f:
             pickle.dump(datasets, f)
 
         notify(f'Scraper successfully retrieved URLs from {len(results)} offenders in beat {beat}')
 
-        return datasets 
+    return datasets 
 
 #create a separate file for each district rather than one massive file
 #data structure is [(beat1:[url1, url2, url3]), (beat2: [url1, url2, url3])]
@@ -274,7 +274,7 @@ def scrape_detail_pages(d):
         df['bond_type'] = df.bond_type.str.replace('[A-z]+', '', regex=True)
 
         #directory to save file in
-        local_path = '/home/hackerlikecomputer/CPD-Adult-Arrests-Scraper/data/'
+        local_path = '/home/hackerlikecomputer/proj/CPD-Adult-Arrests-Scraper/data/'
         #save df as csv locally
         #then upload the files as a new table in the database
         df.to_csv(f'{local_path}beat_{beat}.csv', index=False)
@@ -287,6 +287,6 @@ datasets = scrape_results_pages()
 try: 
     scrape_detail_pages(datasets)
 except: 
-    with open("/home/hackerlikecomputer/CPD-Adult-Arrests-Scraper/archive/datasets.txt", "r") as f:
+    with open("/home/hackerlikecomputer/proj/CPD-Adult-Arrests-Scraper/archive/datasets.txt", "r") as f:
         pickled_datasets = pickle.load(f) 
         scrape_detail_pages(pickled_datasets)
