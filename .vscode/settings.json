@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "C:\\Users\\cmhac\\Anaconda3\\envs\\adultarrests\\python.exe"
+    "python.pythonPath": "C:\\Users\\cmhack0114\\.conda\\envs\\adultarrests\\python.exe",
+    "python.linting.enabled": true
 }

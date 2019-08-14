@@ -1,3 +1,5 @@
+'''spamspamspam'''
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -119,3 +121,6 @@ for beat in tqdm(beats, position=0, desc='BEATS'):
 
     notify(f'Scraper successfully retrieved URLs from {len(results)} \
              offenders in beat {beat}')
+
+
+#%%
