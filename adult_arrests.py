@@ -1,7 +1,7 @@
 """Python module to scrape all the data from the Chicago Police Adult Arrest
    search page."""
 
-# I use what are called docstrings very heavily. It's those triple quotes """
+# I use what are called docstrings pretty heavily. It's those triple quotes """
 # They can be used after function and class definitions
 # Some code editors (I use VSCode, which does this) can use them to give hints
 # For example, you'll start to write a function and it will tell you which
@@ -9,14 +9,19 @@
 
 # re is the RegEx python core module (comes with python, no install)
 import re
+
 # time allows you to pause a script for a certain time
 import time
+
 # handles HTTP requests
 import requests
+
 # HTML parser
 from bs4 import BeautifulSoup
+
 # Used for data manipulation
 import pandas as pd
+
 # Helpful for math, pandas uses it heavily
 import numpy as np
 
@@ -27,8 +32,15 @@ import numpy as np
 # https://www.geeksforgeeks.org/user-defined-exceptions-python-examples/
 class ElementNotFoundException(Exception):
     """custom exception class when an element doesn't exist"""
+
     # ^^docstring
     # the exception doesn't do anything, so just use pass
+    pass
+
+
+class MissingDataError(Exception):
+    """custom exception class for missing results when passed to DataFrame"""
+
     pass
 
 
@@ -44,6 +56,7 @@ class ElementNotFoundException(Exception):
 # but you can learn more here:
 # https://realpython.com/python3-object-oriented-programming/
 
+
 class AdultArrestScraper:
     def __init__(self):
         self.base_url = "http://publicsearch3.azurewebsites.net"
@@ -55,11 +68,11 @@ class AdultArrestScraper:
             "Connection": "keep-alive",
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                          "AppleWebKit/537.36 (KHTML, like Gecko) "
-                          "Chrome/78.0.3904.97 Safari/537.36",
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/78.0.3904.97 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                      "image/webp,image/apng,*/*;q=0.8,application/signed-exchange;"
-                      "v=b3",
+            "image/webp,image/apng,*/*;q=0.8,application/signed-exchange;"
+            "v=b3",
             "Referer": "http://publicsearch3.azurewebsites.net/Arrests",
             "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
@@ -75,7 +88,11 @@ class AdultArrestScraper:
         )
 
     def get(self, url):
-        """Makes an GET request, allowing retries and using headers"""
+        """Makes an GET request, allowing retries and using headers
+
+        Args:
+            url (str): url to GET
+        """
 
         # first set up counters, which will be modified in the while loop
         retry_count = 0
@@ -112,18 +129,29 @@ class AdultArrestScraper:
                 f"a total of {total_wait_time} seconds"
             )
 
+    # I'm overriding the BeautifulSoup.find() and findAll() methods
+    # these custom methods use BeautifulSoup under the hood, but provide additional
+    # functionality
+    # For example: BeautifulSoup returns None if it doesn't find() something
+    # I wanted it to throw an error, so rather than repeatedly testing if the request
+    # was successful
+    # each time I made a request, I created this method
     def find(self, soup, name, attrs={}):
-        """replaces the BeautifulSoup.get() method, throws error if no results
+        """replaces the BeautifulSoup.find() method, throws error if no results
 
         Args:
-            name (str): name of tag
-            attrs (dict): attrs pass to soup.find()
+            soup (bs4.BeautifulSoup object): soup to search
+            name (str): name of tag, passed directly to soup.find()
+            attrs (dict): attrs pass to soup.find(), passed directly to soup.find()
+
+        Returns: to_find (bs4.BeautifulSoup object)
         """
+
         # the arguments from my find() function are passed directly to soup.find()
         to_find = soup.find(name, attrs)
         # soup.find() returns None if it can't find it
         # to tell if something is not None, just write "if *thing*""
-        # you don't need to write "if thing is None"
+        # you don't need to write out "if thing is None"
         if to_find:
             return to_find
         else:
@@ -131,13 +159,18 @@ class AdultArrestScraper:
                 f"{name} element not found with attrs {attrs}"
             )
 
+    # same deal as above, this does the same thing as soup.findAll()
+    # with additional functionality
     def find_all(self, soup, name, attrs={}):
         """replaces the BeautifulSoup.findAll() method
 
         Args:
             name (str): name of tag
             attrs (dict): attrs pass to soup.find()
+
+        Returns: to_find (list of bs4.BeautifulSoup objects)
         """
+
         # same deal as find(), arguments passed right to soup.find()
         to_find = soup.findAll(name, attrs)
         # in this case, findAll returns an empty list if none are found
@@ -149,13 +182,14 @@ class AdultArrestScraper:
             )
 
     def get_page_num(self, soup):
-        """retrieves the number of pages for a serach result
+        """retrieves the number of pages for a search result
 
         Args:
             soup (BeautifulSoup object): soup from which to get result
 
         Returns: page number (int), or None
         """
+
         # first find the paginator div
         try:
             paginator = self.find(soup, "div", {"class": "pagination-container"})
@@ -182,7 +216,10 @@ class AdultArrestScraper:
 
         Args:
             soup (BeautifulSoup object): soup to search
+
+        Returns: detail_hrefs (list of str)
         """
+
         results_table = self.find(soup, "table", {"class": "table-striped"})
         tbody = self.find(results_table, "tbody")
         rows = self.find_all(tbody, "tr")
@@ -206,6 +243,8 @@ class AdultArrestScraper:
 
         Args:
             href (str): href to request
+
+        Returns: pandas DataFrame
         """
 
         url = self.base_url + "/" + href
@@ -235,11 +274,12 @@ class AdultArrestScraper:
         table = self.find(body, "table")
         rows = self.find_all(table, "tr")
 
-        charges = {
-            "statute": [],
-            "description": [],
-            "inchoate": []
-        }
+        # set up a dict of lists to store the results
+        charges = {"statute": [], "description": [], "inchoate": []}
+
+        # Brody: This might be confusing, so let me know if you want a more
+        # detailed explanation
+
         # I'm also adding the keys for the details
         # I want one row per charge with the details in each row
         # It's a surprise tool that will help us later
@@ -267,8 +307,14 @@ class AdultArrestScraper:
                     charges[key].append(details[key])
 
         # remember that weird dictionary/list structure?
-        # we can pass it right into a dataframe
-        return pd.DataFrame(charges)
+        # we can pass it right into a dataframe as long as
+        # all the lists are the same length
+        # I'm using a try/except block to catch an ValueError if
+        # the lists are different lengths, which would indicate missing data
+        try:
+            return pd.DataFrame(charges)
+        except ValueError:
+            raise MissingDataError(f"one or more columns has missing data")
 
     def query(
         self,
@@ -293,7 +339,6 @@ class AdultArrestScraper:
         """
 
         params = [first_name, last_name, cb_number, charge, area, district, beat]
-
         if all(p == "" for p in params):
             raise ValueError("no search parameters passed")
 
@@ -302,8 +347,13 @@ class AdultArrestScraper:
         elif first_name != "" and last_name == "":
             raise ValueError("first name cannot be provided without last name")
 
+        # the parentheses here is just because the line would be very long
+        # keeping with the rule of max line length of 88
+        # multiple strings inside parentheses are automatically combined
         query_str = (
+            # prefix for URL query
             "/Arrests?"
+            # query parameters
             f"FirstName={first_name}"
             f"&LastName={last_name}"
             f"&CbNumber={cb_number}"
@@ -313,12 +363,17 @@ class AdultArrestScraper:
             f"&Beat={beat}"
         )
 
-        # the ? tells the server you're including parameters
+        # merge the base url and query parameters
         query_url = self.base_url + query_str
+        # make the request
         resp = self.get(query_url)
+        # get the initial result page
         soup = BeautifulSoup(resp.content, "html.parser")
+        # get max page number to loop through pages
         max_page_no = self.get_page_num(soup)
         # get_page_num returns None if it doesn't find one
+        # self.scrape_details_page returns df, create list for results
+        # we'll combine them later
         dfs = []
         if max_page_no:
             # there are multple pages to scrape
@@ -331,35 +386,37 @@ class AdultArrestScraper:
                 for href in hrefs:
                     dfs.append(self.scrape_details_page(href))
         else:
-            # do it once
+            # only one page, do it once
             resp = self.get(query_url)
             soup = BeautifulSoup(resp.content, "html.parser")
             hrefs = self.get_detail_hrefs(soup)
             for href in hrefs:
                 dfs.append(self.scrape_details_page(href))
 
+        # combine the list we created above into a single DataFrame
         df = pd.concat(dfs)
         return df
 
 
 # when a python file is run from the command line, python does some stuff
-# one of those things is hard-coding a variable called __name__ to a string called
-# "__main__". That does not happen when a module is imported
+# one of those things is hard-coding a variable called __name__ to a string,
+# "__main__". That does not happen when a module is imported.
 # all python scripts can be imported to other python scripts
-# in this case, you could do from adult_arrests import AdultArrestScraper
+# in this case, you could do "from adult_arrests import AdultArrestScraper"
 # again, you do NOT need to know this to use python, but I wanted to explain this
+
 # I do it like this because I might want to use this code in another script
 # I might also want to run the whole thing like you can below
 # to run something from the command line, you write
-# python -m module_name
+# python -m module_name. That'll run everything below this if clause
 # more here: https://realpython.com/python-main-function/
 if __name__ == "__main__":
-    # I know there are 25 police districts in Chicago
     # set up a bin to put all the dfs
     dfs = []
     # initialize the scraper
     # when you do this, __init__ runs behind the scenes
     scraper = AdultArrestScraper()
+    # I know there are 25 police districts in Chicago
     # now loop through the districts
     for i in range(1, 26):
         df = scraper.query(district=i)
@@ -367,6 +424,6 @@ if __name__ == "__main__":
     # pd.concat combines a list of dfs
     df = pd.concat(dfs)
     # allows user to choose where to save file
-    out_path = input("Path to save results to: ")
+    out_path = input("Path to csv to save results to: ")
     # finally, save them as a single file
     df.to_csv(out_path)
