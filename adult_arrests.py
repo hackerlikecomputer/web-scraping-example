@@ -399,10 +399,11 @@ class AdultArrestScraper:
 
 
 # when a python file is run from the command line, python does some stuff
-# one of those things is hard-coding a variable called __name__ to a string,
+# one of those things is assigning a variable called __name__ to a string,
 # "__main__". That does not happen when a module is imported.
 # all python scripts can be imported to other python scripts
 # in this case, you could do "from adult_arrests import AdultArrestScraper"
+# if you wanted to use this scraper object in another code
 # again, you do NOT need to know this to use python, but I wanted to explain this
 
 # I do it like this because I might want to use this code in another script
@@ -410,20 +411,38 @@ class AdultArrestScraper:
 # to run something from the command line, you write
 # python -m module_name. That'll run everything below this if clause
 # more here: https://realpython.com/python-main-function/
+
+# I define several simple functions to make running this simpler
+def scrape_all():
+   dfs = []
+   scraper = AdultArrestScraper()
+   for district in range(1, 26):
+      df = scraper.query(district=district)
+      dfs.append(df)
+   df = pd.concat(dfs)
+   return df
+
+
+def save(df, file):
+   df.to_csv(file)
+
+# I then define a function, called main() (not __main__) in which I put all the top-level
+# actions my code will run
+
+def main():
+   cwd_outfile = "output.csv"
+   df = scrape_all()
+   save(df, cwd_outfile)
+
+
+# then, if the module is being run on its own, run main()
 if __name__ == "__main__":
-    # set up a bin to put all the dfs
-    dfs = []
-    # initialize the scraper
-    # when you do this, __init__ runs behind the scenes
-    scraper = AdultArrestScraper()
-    # I know there are 25 police districts in Chicago
-    # now loop through the districts
-    for i in range(1, 26):
-        df = scraper.query(district=i)
-        dfs.append(df)
-    # pd.concat combines a list of dfs
-    df = pd.concat(dfs)
-    # allows user to choose where to save file
-    out_path = input("Path to csv to save results to: ")
-    # finally, save them as a single file
-    df.to_csv(out_path)
+   main() 
+
+   
+# P.S. please note that this scraper takes no less than 12 hours to run single-threaded
+# In practice, I ran several instances of this simultaneously hitting different districts
+# you need to deploy the script to a server or somewhere it can run continuously to make this work
+# Also, because of the long-running nature of this program, I allowed for more retries and longer
+# pauses if the request kept failing, which prevented it from failing halfway through
+# The core AdultArrestScraper code here is basically the same as the one I used, though. 
